@@ -1,0 +1,389 @@
+<!-- Save this as calculator.html and open in your browser -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Creative Calculator</title>
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #23272f;
+            /* Dark background */
+        }
+
+        .calculator {
+            background: #181c23;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 32px 24px 24px 24px;
+            width: 340px;
+        }
+
+        .display {
+            background: #23272f;
+            color: #fff;
+            /* ...existing code... */
+            font-size: 2.2em;
+            padding: 20px 15px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: right;
+            min-height: 48px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            letter-spacing: 1px;
+            font-weight: bold;
+            overflow-x: hidden;
+            /* Remove horizontal scroll bar */
+            word-break: break-all;
+            /* Break long numbers to next line */
+            white-space: nowrap;
+            /* Allow wrapping */
+            max-width: 100%;
+            /* Prevent overflow */
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        button {
+            padding: 18px 0;
+            font-size: 1.3em;
+            border: none;
+            border-radius: 12px;
+            background: #2d323c;
+            /* Digit button background */
+            color: #fff;
+            /* Digit button color */
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+        }
+
+        button.operator {
+            background: #ff9500;
+            color: #fff;
+        }
+
+        button.equal {
+            background: #00c896;
+            color: #fff;
+            grid-column: span 1;
+        }
+
+        button.clear,
+        button.ce,
+        button.negate,
+        button.backspace {
+            background: #50545c;
+            color: #fff;
+        }
+
+        button.negate {
+            background: #50545c;
+            color: #fff;
+        }
+
+        button.ce {
+            background: #50545c;
+            color: #fff;
+        }
+
+        button.backspace {
+            background: #50545c;
+            color: #fff;
+        }
+
+        button:active,
+        button.pressed {
+            transform: scale(0.97);
+            filter: brightness(0.85);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        }
+
+        @media (max-width: 400px) {
+            .calculator {
+                width: 98vw;
+                padding: 10px;
+            }
+
+            .display {
+                font-size: 1.2em;
+                padding: 10px 5px;
+            }
+
+            button {
+                font-size: 1em;
+                padding: 10px 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="buttons" id="buttons">
+            <!-- Row 1 -->
+            <button class="ce">CE</button>
+            <button class="backspace">C</button>
+            <button class="clear">⌫</button>
+            <button class="operator" data-op="/">÷</button>
+            <!-- Row 2 -->
+            <button>7</button>
+            <button>8</button>
+            <button>9</button>
+            <button class="operator" data-op="*">×</button>
+            <!-- Row 3 -->
+            <button>4</button>
+            <button>5</button>
+            <button>6</button>
+            <button class="operator" data-op="-">−</button>
+            <!-- Row 4 -->
+            <button>1</button>
+            <button>2</button>
+            <button>3</button>
+            <button class="operator" data-op="+">+</button>
+            <!-- Row 5 -->
+            <button class="negate">+/-</button>
+            <button>0</button>
+            <button>.</button>
+            <button class="equal">=</button>
+        </div>
+    </div>
+    <script>
+        const display = document.getElementById('display');
+        const buttons = document.getElementById('buttons');
+        let currentInput = '0';
+        let resetNext = false;
+
+        const operatorSymbols = ['+', '−', '×', '÷'];
+
+        function updateDisplay() {
+            display.textContent = currentInput;
+            adjustFontSize();
+        }
+
+        buttons.addEventListener('click', function (e) {
+            if (!e.target.matches('button')) return;
+            handleInput(e.target.textContent, e.target);
+        });
+
+        // Add pressed effect for mouse clicks
+        buttons.addEventListener('mousedown', function (e) {
+            if (e.target.matches('button')) {
+                e.target.classList.add('pressed');
+            }
+        });
+        buttons.addEventListener('mouseup', function (e) {
+            if (e.target.matches('button')) {
+                e.target.classList.remove('pressed');
+            }
+        });
+        buttons.addEventListener('mouseleave', function (e) {
+            if (e.target.matches('button')) {
+                e.target.classList.remove('pressed');
+            }
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', function (e) {
+            // ...existing code...
+            let key = e.key;
+            let btn = null;
+            if (key === 'Enter' || key === '=') {
+                btn = document.querySelector('.equal');
+                handleInput('=', btn);
+            } else if (key === 'Backspace') {
+                btn = document.querySelector('.clear');
+                handleInput('⌫', btn);
+            } else if (key === 'Delete') {
+                btn = document.querySelector('.ce');
+                handleInput('CE', btn);
+            } else if (/^[0-9]$/.test(key)) {
+                btn = Array.from(buttons.querySelectorAll('button')).find(b => b.textContent === key);
+                handleInput(key, btn);
+            } else if (key === '.') {
+                btn = Array.from(buttons.querySelectorAll('button')).find(b => b.textContent === '.');
+                handleInput('.', btn);
+            } else if (key === '+' || key === '-' || key === '*' || key === '/') {
+                let opBtn = {
+                    '+': '+',
+                    '-': '−',
+                    '*': '×',
+                    '/': '÷'
+                };
+                btn = Array.from(buttons.querySelectorAll('.operator')).find(b => b.textContent === opBtn[key]);
+                handleInput(opBtn[key], btn);
+            }
+            if (btn) {
+                btn.classList.add('pressed');
+                setTimeout(() => btn.classList.remove('pressed'), 120);
+            }
+            if (btn) e.preventDefault();
+        });
+
+        function isOperator(char) {
+            return operatorSymbols.includes(char);
+        }
+
+        function handleInput(value, btn) {
+            // Clear Entry (CE)
+            if (btn && btn.classList && btn.classList.contains('ce')) {
+                currentInput = '0';
+                updateDisplay();
+                return;
+            }
+
+            // Backspace (⌫)
+            if (btn && btn.classList && btn.classList.contains('clear')) {
+                if (resetNext) {
+                    currentInput = '0';
+                    resetNext = false;
+                } else {
+                    if (currentInput.length > 1) {
+                        currentInput = currentInput.slice(0, -1);
+                        if (currentInput.length === 1 && isOperator(currentInput)) {
+                            currentInput = '0';
+                        }
+                    } else {
+                        currentInput = '0';
+                    }
+                }
+                updateDisplay();
+                return;
+            }
+
+            // Single digit clear (C)
+            if (btn && btn.classList && btn.classList.contains('backspace')) {
+                if (resetNext) {
+                    currentInput = '0';
+                    resetNext = false;
+                } else {
+                    if (currentInput.length > 1) {
+                        currentInput = currentInput.slice(0, -1);
+                        if (currentInput.length === 1 && isOperator(currentInput)) {
+                            currentInput = '0';
+                        }
+                    } else {
+                        currentInput = '0';
+                    }
+                }
+                updateDisplay();
+                return;
+            }
+
+            // Negate (+/-)
+            if (btn && btn.classList && btn.classList.contains('negate')) {
+                // Only apply to last number, toggle sign
+                let match = currentInput.match(/(-?\d*\.?\d+)$/);
+                if (match) {
+                    let numStr = match[1];
+                    let startIdx = match.index;
+                    if (numStr.startsWith('-')) {
+                        // Remove negative
+                        currentInput = currentInput.slice(0, startIdx) + numStr.slice(1);
+                    } else {
+                        // Add negative, but don't add -- if already negative
+                        currentInput = currentInput.slice(0, startIdx) + '-' + numStr;
+                    }
+                    updateDisplay();
+                }
+                return;
+            }
+
+            if ((btn && btn.classList && btn.classList.contains('equal')) || value === '=') {
+                try {
+                    let expr = currentInput
+                        .replace(/÷/g, '/')
+                        .replace(/×/g, '*')
+                        .replace(/−/g, '-');
+                    // Fix double operators: -- to +, ++ to +, +- to -, -+ to -
+                    expr = expr.replace(/--/g, '+');
+                    expr = expr.replace(/\+\+/g, '+');
+                    expr = expr.replace(/\+-/g, '-');
+                    expr = expr.replace(/-\+/g, '-');
+                    // Remove trailing operator if present
+                    expr = expr.replace(/[\+\-\*\/]$/, '');
+                    let result = eval(expr);
+                    display.textContent = result;
+                    currentInput = result.toString();
+                    resetNext = true;
+                } catch {
+                    display.textContent = 'Error';
+                    currentInput = '0';
+                    resetNext = true;
+                }
+                adjustFontSize();
+                return;
+            }
+
+            if (resetNext) {
+                if (/[0-9.]/.test(value)) {
+                    currentInput = value === '.' ? '0.' : value;
+                } else if (isOperator(value)) {
+                    currentInput = display.textContent + value;
+                } else {
+                    currentInput = display.textContent + value;
+                }
+                resetNext = false;
+                updateDisplay();
+                return;
+            }
+
+            // Prevent multiple consecutive operators
+            if (isOperator(value)) {
+                // Don't allow operator at start (except minus for negative numbers)
+                if (currentInput === '0' && value !== '−') return;
+                // Don't allow two operators in a row
+                let lastChar = currentInput.slice(-1);
+                if (isOperator(lastChar)) {
+                    // Replace last operator with new one
+                    currentInput = currentInput.slice(0, -1) + value;
+                } else {
+                    currentInput += value;
+                }
+                updateDisplay();
+                return;
+            }
+
+            if (currentInput === '0' && value !== '.') {
+                currentInput = value;
+            } else {
+                // Prevent multiple decimals in a number
+                if (value === '.') {
+                    let parts = currentInput.split(/[\+\−\×\÷\*\/]/);
+                    if (parts[parts.length - 1].includes('.')) return;
+                }
+                currentInput += value;
+            }
+            updateDisplay();
+        }
+
+        function adjustFontSize() {
+            const display = document.getElementById('display');
+            let length = display.textContent.length;
+            if (length > 18) {
+                display.style.fontSize = "1.2em";
+            } else if (length > 10) {
+                display.style.fontSize = "1.6em";
+            } else {
+                display.style.fontSize = "2.2em";
+            }
+        }
+        updateDisplay();
+    </script>
+</body>
+
+</html>
